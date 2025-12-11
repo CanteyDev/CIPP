@@ -19,31 +19,29 @@ jobs:
         with:
           submodules: true
 
-      # --- START OF THE ULTIMATE PERMISSION FIX ---
-      - name: Fix .git/config Ownership and Permissions
-        # This command ensures the current runner user (who runs the cleanup) owns and can write to the config file.
-        run: |
-          cd ${{ github.workspace }}
-          # 1. Change ownership of the .git/config file to the current user ($USER)
-          sudo chown $USER .git/config
-          # 2. Grant the owner (current user) write permission
-          chmod u+w .git/config
-        shell: bash
-      # --- END OF THE FIX ---
-
       - name: Build And Deploy
         id: builddeploy
         uses: Azure/static-web-apps-deploy@v1
         with:
-          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_LIVELY_PEBBLE_0A653070F }} # change this to your repository secret name
-          repo_token: ${{ secrets.GITHUB_TOKEN }} # Used for Github integrations (i.e. PR comments)
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_LIVELY_PEBBLE_0A653070F }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
           action: "upload"
-          ###### Repository/Build Configurations - These values can be configured to match your app requirements. ######
-          # For more information regarding Static Web App workflow configurations, please visit: https://aka.ms/swaworkflowconfig
-          app_location: "/" # App source code path
-          api_location: "" # Api source code path - optional
-          output_location: "" # Built app content directory - optional
-          ###### End of Repository/Build Configurations ######
+          app_location: "/"
+          api_location: ""
+          output_location: ""
+
+      # --- START OF THE POST-DEPLOYMENT PERMISSION FIX ---
+      # This step must run AFTER the containerized deployment to reset file ownership
+      # back to the runner user, allowing the 'Post job cleanup' to function.
+      - name: Reset .git/config Ownership for Cleanup
+        if: always()
+        run: |
+          # Use 'sudo chown' to force the config file ownership back to the current runner user
+          sudo chown $USER .git/config
+          # Ensure write permissions are granted to the owner
+          chmod u+w .git/config
+        shell: bash
+      # --- END OF THE POST-DEPLOYMENT PERMISSION FIX ---
 
   close_pull_request_job:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
@@ -54,5 +52,5 @@ jobs:
         id: closepullrequest
         uses: Azure/static-web-apps-deploy@v1
         with:
-          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_LIVELY_PEBBLE_0A653070F }} # change this to your repository secret name
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_LIVELY_PEBBLE_0A653070F }}
           action: "close"
