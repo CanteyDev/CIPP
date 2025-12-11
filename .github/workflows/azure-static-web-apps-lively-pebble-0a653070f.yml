@@ -19,13 +19,15 @@ jobs:
         with:
           submodules: true
 
-      # --- START OF THE FIX FOR THE "Failed to remove 'http.https://github.com/.extraheader'" ERROR ---
-      - name: Fix .git/config Permissions
-        # The actions/checkout step may have left .git/config read-only for the runner's user.
-        # This fixes the permission so the cleanup phase can write to the file.
+      # --- START OF THE ULTIMATE PERMISSION FIX ---
+      - name: Fix .git/config Ownership and Permissions
+        # This command ensures the current runner user (who runs the cleanup) owns and can write to the config file.
         run: |
           cd ${{ github.workspace }}
-          chmod +w .git/config
+          # 1. Change ownership of the .git/config file to the current user ($USER)
+          sudo chown $USER .git/config
+          # 2. Grant the owner (current user) write permission
+          chmod u+w .git/config
         shell: bash
       # --- END OF THE FIX ---
 
