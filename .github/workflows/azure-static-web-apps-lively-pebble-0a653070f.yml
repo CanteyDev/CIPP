@@ -31,12 +31,11 @@ jobs:
           api_location: "" # Api source code path - optional
           output_location: "" # Built app content directory - optional
           ###### End of Repository/Build Configurations ######
-
-  - name: Manually Unset the Extra Header
-  # This step attempts to preempt the cleanup
-  run: |
-    /usr/bin/git config --local --unset-all http.https://github.com/.extraheader || echo "Header not found or failed to remove (expected if cleanup runs next)"
-  shell: bash
+      - name: Manually Unset the Extra Header
+           # This step attempts to preempt the cleanup
+        run: | 
+        /usr/bin/git config --local --unset-all http.https://github.com/.extraheader || echo "Header not found or failed to remove (expected if cleanup runs next)"
+        shell: bash
 
   close_pull_request_job:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
